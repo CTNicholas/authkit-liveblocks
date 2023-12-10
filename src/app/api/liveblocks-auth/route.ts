@@ -1,16 +1,27 @@
 import { Liveblocks } from "@liveblocks/node";
+import { getUser } from "@/auth";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });
 
 export async function POST(request: Request) {
-  const user = { id: "tatumpaolo@example.com", info: { name: "Tatum Paolo" } };
+  const { isAuthenticated, user } = await getUser();
 
-  const session = liveblocks.prepareSession(
-    user.id,
-    { userInfo: user.info } // Optional
-  );
+  if (!isAuthenticated || !user) {
+    return new Response(JSON.stringify({ error: "Not authenticated" }), {
+      status: 400,
+    });
+  }
+
+  const { id, firstName, lastName, email } = user;
+  const session = liveblocks.prepareSession(id, {
+    userInfo: {
+      firstName,
+      lastName,
+      email,
+    },
+  });
 
   /**
    * Implement your own security here.
